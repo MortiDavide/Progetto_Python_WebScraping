@@ -31,7 +31,14 @@ def scraping(url):
             except ValueError:
                 prezzo_float = None
             
-            immagine_url = immagine['src'] if immagine and 'src' in immagine.attrs else "https://via.placeholder.com/150"
+            img_tag = gioco.find("img")
+            if img_tag:
+                immagine_url = img_tag.get("data-src") or img_tag.get("src")  # Usa data-src se presente
+                if immagine_url.startswith("/"):  # Completa il link se relativo
+                    immagine_url = "https://www.instant-gaming.com" + immagine_url
+            else:
+                immagine_url = "https://via.placeholder.com/150"
+
             link_url = link['href'] if link and 'href' in link.attrs else "#"
             
             giochi.append({
@@ -99,3 +106,4 @@ def search():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    # app.run()
