@@ -47,7 +47,7 @@
                             {% endif %}
                         </p>
                     </div>
-                    <a href="{{ game.link }}" class="game-link" target="_blank">Vedi Offerta</a>
+                    <a href="{{ url_for('game_details', slug=game.slug) }}" class="game-link">Dettagli</a>
                 </div>
                 {% endfor %}
             </div>
