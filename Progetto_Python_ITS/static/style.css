@@ -84,7 +84,7 @@ h1 {
 
 .games-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     margin-bottom: 2rem;
 }
@@ -105,7 +105,7 @@ h1 {
 }
 
 .game-image {
-    height: 150px;
+    max-width: 100%;
     overflow: hidden;
 }
 
