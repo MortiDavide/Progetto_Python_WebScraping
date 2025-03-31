@@ -12,6 +12,15 @@
     <div class="container">
         <header>
             <h1>Instant Gaming Search</h1>
+            <div class="auth-links">
+                {% if session['user_id'] %}
+                <span>Benvenuto, {{ session['username'] }}!</span>
+                <a href="{{ url_for('logout') }}" class="button">Logout</a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="button">Login</a>
+                <a href="{{ url_for('register') }}" class="button">Registrati</a>
+                {% endif %}
+            </div>
             <div class="search-container">
                 <form class="search-form" action="/search" method="GET">
                     <input type="text" id="search-input" name="q" placeholder="Cerca un gioco...">

@@ -1,7 +1,8 @@
 :root {
     --primary-color: #2c3e50;
     --secondary-color: #3498db;
-    --accent-color: #e74c3c;
+    --accent-color: #0e547c;
+    --hover-accent: #02806f;
     --background-color: #ecf0f1;
     --card-color: #ffffff;
     --text-color: #333333;
@@ -24,31 +25,59 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    overflow: hidden;
 }
 
+/* Header */
 header {
+    background: var(--primary-color);
+    color: #fff;
+    padding: 20px;
     text-align: center;
+    position: relative;
     margin-bottom: 2rem;
 }
 
 h1 {
-    color: var(--primary-color);
     margin-bottom: 1rem;
 }
 
+.auth-links {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.auth-links a {
+    color: #fff;
+    background: var(--accent-color);
+    padding: 8px 12px;
+    margin: 0 5px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.auth-links a:hover {
+    background: var(--hover-accent);
+}
+
+/* Search */
 .search-container {
     display: flex;
     justify-content: center;
     max-width: 600px;
-    margin: 0 auto;
+    margin: 20px auto;
 }
 
 .search-form {
     display: flex;
     width: 100%;
+    align-items: stretch;
+    /* Allinea gli elementi in altezza */
 }
 
-#search-input {
+.search-form input {
     padding: 12px 20px;
     font-size: 1rem;
     border: 2px solid #ddd;
@@ -56,24 +85,35 @@ h1 {
     width: 80%;
     outline: none;
     transition: border-color 0.3s;
+    margin: 0;
+    /* Rimuovi eventuali margini */
+    height: 46px;
+    /* Altezza fissa */
 }
 
-#search-input:focus {
+.search-form input:focus {
     border-color: var(--secondary-color);
 }
 
-#search-button {
-    background-color: var(--secondary-color);
+.search-form button {
+    background-color: var(--accent-color);
     color: white;
     border: none;
     border-radius: 0 25px 25px 0;
-    padding: 12px 20px;
+    padding: 12px 15px;
     cursor: pointer;
     transition: background-color 0.3s;
+    margin: 0;
+    /* Rimuovi eventuali margini */
+    height: 46px;
+    /* Stessa altezza dell'input */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-#search-button:hover {
-    background-color: #2980b9;
+.search-form button:hover {
+    background-color: var(--hover-accent);
 }
 
 #results-title {
@@ -82,16 +122,18 @@ h1 {
     text-align: center;
 }
 
+/* Game Grid */
 .games-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
+    padding: 20px;
     margin-bottom: 2rem;
 }
 
 .game-card {
     background-color: var(--card-color);
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s, box-shadow 0.3s;
@@ -114,6 +156,7 @@ h1 {
     height: 100%;
     object-fit: cover;
     transition: transform 0.3s;
+    border-radius: 5px 5px 0 0;
 }
 
 .game-card:hover .game-image img {
@@ -123,13 +166,14 @@ h1 {
 .game-info {
     padding: 15px;
     flex-grow: 1;
+    text-align: center;
 }
 
 .game-title {
-    font-size: 1rem;
+    font-size: 1.1em;
+    font-weight: bold;
     margin-bottom: 10px;
     color: var(--primary-color);
-    /* Per titoli lunghi */
     display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
@@ -137,16 +181,16 @@ h1 {
 }
 
 .game-price {
-    font-size: 1.2rem;
-    font-weight: bold;
     color: var(--accent-color);
+    font-weight: bold;
+    font-size: 1.2rem;
 }
 
 .game-link {
     display: block;
     text-align: center;
     padding: 10px;
-    background-color: var(--secondary-color);
+    background-color: var(--accent-color);
     color: white;
     text-decoration: none;
     font-weight: bold;
@@ -154,7 +198,7 @@ h1 {
 }
 
 .game-link:hover {
-    background-color: #2980b9;
+    background-color: var(--hover-accent);
 }
 
 #no-results {
@@ -162,6 +206,89 @@ h1 {
     padding: 40px;
     font-size: 1.2rem;
     color: #777;
+}
+
+/* Flash Messages */
+.flash-messages {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.flash {
+    padding: 10px;
+    margin: 5px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.flash.success {
+    background: #4CAF50;
+    color: white;
+}
+
+.flash.danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.flash.warning {
+    background: #f1c40f;
+    color: black;
+}
+
+/* Forms */
+form {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 400px;
+    margin: auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+form label {
+    display: block;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+form input {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+form button {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+form button:hover {
+    background: var(--hover-accent);
+}
+
+p {
+    text-align: center;
+    margin-top: 10px;
+}
+
+p a {
+    color: var(--accent-color);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+p a:hover {
+    text-decoration: underline;
 }
 
 footer {
@@ -176,7 +303,7 @@ footer {
     display: block;
     margin: 15px auto;
     padding: 8px 16px;
-    background-color: #95a5a6;
+    background-color: var(--accent-color);
     color: white;
     border: none;
     border-radius: 20px;
@@ -187,7 +314,7 @@ footer {
 }
 
 .return-button:hover {
-    background-color: #7f8c8d;
+    background-color: var(--hover-accent);
 }
 
 /* Responsive */
@@ -199,6 +326,13 @@ footer {
     .container {
         padding: 10px;
     }
+
+    .auth-links {
+        position: static;
+        display: flex;
+        justify-content: center;
+        margin-top: 15px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -206,7 +340,14 @@ footer {
         grid-template-columns: 1fr;
     }
 
-    #search-input {
+    .search-form input {
         width: 70%;
+        height: 46px;
+        /* Mantieni la stessa altezza anche in mobile */
+    }
+
+    .search-form button {
+        height: 46px;
+        /* Mantieni la stessa altezza anche in mobile */
     }
 }

@@ -1,14 +1,38 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import requests
 from bs4 import BeautifulSoup
 import re
 from fuzzywuzzy import fuzz  # Importa fuzzywuzzy
 import time
+import csv
 
 app = Flask(__name__)
+app.secret_key = 'supersecretkey'
 
 saved_games = []
 searched_games = []
+users_file = 'users.csv'
+
+# Funzione per leggere gli utenti dal CSV
+def load_users():
+    users = {}
+    try:
+        with open(users_file, newline='', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                if len(row) == 2:
+                    users[row[0]] = row[1]
+    except FileNotFoundError:
+        pass
+    return users
+
+# Funzione per salvare un nuovo utente nel CSV
+def save_user(username, password):
+    with open(users_file, 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([username, password])
+
+users = load_users()
 
 def generate_slug(title, platform):
     """Genera uno slug unico dal titolo e dalla piattaforma."""
@@ -403,6 +427,42 @@ def game_details(slug):
         return render_template('game.html', game=gioco_selezionato, prezzo_steam=prezzo_steam, prezzo_ig=prezzo_ig)
 
     return "Gioco non trovato", 404
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        users = load_users()
+        if username in users and users[username] == password:
+            session['user_id'] = username
+            session['username'] = username
+            flash('Login avvenuto con successo!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Credenziali non valide.', 'danger')
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        users = load_users()
+        if username in users:
+            flash('Username già esistente!', 'warning')
+        else:
+            save_user(username, password)
+            flash('Registrazione avvenuta con successo! Ora puoi accedere.', 'success')
+            return redirect(url_for('login'))
+    return render_template('register.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    session.pop('username', None)
+    flash("Sei uscito dall'account.", 'info')
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
