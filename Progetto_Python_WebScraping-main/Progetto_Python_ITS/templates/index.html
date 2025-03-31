@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instant Gaming Search</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Instant Gaming Search</h1>
+            <div class="auth-links">
+                {% if session['user_id'] %}
+                    <span>Benvenuto, {{ session['username'] }}!</span>
+                    <a href="{{ url_for('logout') }}" class="button">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="button">Login</a>
+                    <a href="{{ url_for('register') }}" class="button">Registrati</a>
+                {% endif %}
+            </div>
+            <div class="search-container">
+                <form class="search-form" action="/search" method="GET">
+                    <input type="text" id="search-input" name="q" placeholder="Cerca un gioco...">
+                    <button type="submit" id="search-button">🔍</button>
+                </form>
+            </div>
+        </header>
+
+        <main>
+            <h2 id="results-title">
+                {% if query %}
+                Risultati per: "{{ query }}"
+                <a href="/" class="return-button">Torna ai giochi in tendenza</a>
+                {% else %}
+                Giochi in tendenza
+                {% endif %}
+            </h2>
+
+            {% if games %}
+            <div class="games-grid">
+                {% for game in games %}
+                <div class="game-card">
+                    <div class="game-image">
+                        <img src="{{ game.immagine }}" alt="{{ game.titolo }}">
+                    </div>
+                    <div class="game-info">
+                        <h3 class="game-title">{{ game.titolo }}</h3>
+                        <p class="game-price">
+                            {% if game.prezzo %}
+                            €{{ "%.2f"|format(game.prezzo) }}
+                            {% else %}
+                            Prezzo non disponibile
+                            {% endif %}
+                        </p>
+                    </div>
+                    <a href="{{ url_for('game_details', slug=game.slug) }}" class="game-link">Dettagli</a>
+                </div>
+                {% endfor %}
+            </div>
+            {% elif query %}
+            <div id="no-results">
+                <p>Nessun risultato trovato per "{{ query }}". Prova con un'altra ricerca.</p>
+            </div>
+            {% endif %}
+        </main>
+
+    </div>
+</body>
+
+</html>
