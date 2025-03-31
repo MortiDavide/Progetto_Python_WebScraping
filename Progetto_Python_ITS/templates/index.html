@@ -38,7 +38,8 @@
                         <img src="{{ game.immagine }}" alt="{{ game.titolo }}">
                     </div>
                     <div class="game-info">
-                        <h3 class="game-title">{{ game.titolo }}</h3>
+                        <h3 class="game-title">{{ game.titolo }} ({{ game.piattaforma }})</h3>
+                        <p>{{ game.sito }}</p>
                         <p class="game-price">
                             {% if game.prezzo %}
                             €{{ "%.2f"|format(game.prezzo) }}

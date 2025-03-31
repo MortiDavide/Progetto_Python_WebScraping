@@ -2,6 +2,8 @@ from flask import Flask, render_template, request
 import requests
 from bs4 import BeautifulSoup
 import re
+from fuzzywuzzy import fuzz  # Importa fuzzywuzzy
+import time
 
 app = Flask(__name__)
 
@@ -33,7 +35,7 @@ def extract_platform(game_container):
     
     return "PC"  # Se non troviamo nulla, è un gioco per PC
 
-def scraping(url):
+def IG_scraping(url):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36',
         'Accept-Language': 'en-US,en;q=0.9'
@@ -47,7 +49,7 @@ def scraping(url):
     giochi_containers = container.find_all(class_="item")
 
     giochi = []
-    for gioco in giochi_containers:
+    for gioco in giochi_containers[:15]:
         titolo = gioco.find(class_="title")
         prezzo = gioco.find(class_="price")
         img_tag = gioco.find("img")
@@ -78,10 +80,226 @@ def scraping(url):
                 "prezzo": prezzo_float,
                 "immagine": immagine_url,
                 "link": link_url,
+                "sito": "Instant Gaming",
                 "slug": generate_slug(titolo_text, platform)
             })
         
     return giochi
+
+def Steam_scraping(url, query, limite):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9'
+    }
+
+    try:
+        # Invia la richiesta GET a Steam
+        res = requests.get(url, headers=headers)
+        
+        # Analizza la risposta utilizzando BeautifulSoup
+        soup = BeautifulSoup(res.text, 'html.parser')
+        
+        # Cicla attraverso i link dei risultati di gioco
+        game_links = soup.find_all('a', class_='search_result_row')
+        
+        giochi = []
+        
+        for link in game_links[:limite]:
+            try:
+                # Estrai il titolo del gioco
+                title_element = link.find('span', class_='title')
+                if not title_element:
+                    continue  # Salta questo gioco se non ha un titolo
+                
+                title = title_element.text
+                
+                # Usa il fuzzy matching per verificare se la query è abbastanza simile al titolo
+                similarity = fuzz.partial_ratio(query.lower(), title.lower())
+                if similarity < 80:  # Accetta solo corrispondenze con almeno l'80% di similarità
+                    continue
+                
+                # Estrai l'app_id con gestione degli errori
+                href = link.get("href", "")
+                if "/app/" not in href:
+                    continue  # Salta questo gioco se non ha un app_id
+                
+                try:
+                    app_id = href.split("/app/")[1].split("/")[0]
+                except IndexError:
+                    continue  # Salta questo gioco se non può estrarre l'app_id
+                
+                # Estrai il prezzo
+                price_tag = link.find('div', class_='discount_final_price')
+                if not price_tag:
+                    continue  # Salta questo gioco se non ha un prezzo
+                
+                price = price_tag.text.strip()
+                
+                # Salta i giochi gratuiti (prezzo uguale a "Free")
+                if "Free" in price:
+                    continue
+                
+                # Converti il prezzo in numero
+                cleaned_price = re.sub(r"[^\d,\.]", "", price)
+                cleaned_price = cleaned_price.replace(",", ".")  # Steam usa la virgola come decimale
+                
+                try:
+                    prezzo_float = float(cleaned_price)
+                except ValueError:
+                    prezzo_float = None
+                
+                # Vai alla pagina del gioco per ottenere più dettagli
+                try:
+                    game_url = f"https://store.steampowered.com/app/{app_id}/"
+                    game_res = requests.get(game_url, headers=headers)
+                    game_soup = BeautifulSoup(game_res.text, 'html.parser')
+                    
+                    # Estrai la descrizione
+                    description = game_soup.find('div', class_='game_description_snippet')
+                    description = description.text.strip() if description else 'Descrizione non disponibile'
+                    
+                    # Estrai la data di rilascio
+                    release_date = game_soup.find('div', class_='date')
+                    release_date = release_date.text.strip() if release_date else 'Data di rilascio non disponibile'
+                    
+                    # Estrai i generi
+                    genres = []
+                    genre_section = game_soup.find('div', class_='glance_tags')
+                    if genre_section:
+                        genre_tags = genre_section.find_all('a')
+                        for genre in genre_tags:
+                            genre_text = genre.text.strip()
+                            if genre_text:
+                                genres.append(genre_text)
+                    
+                    if not genres:
+                        genres = ['Nessun genere disponibile']
+                    
+                    genres_str = ' - '.join(genres)
+                    
+                    # Estrai l'editore
+                    publisher = 'Editore non disponibile'
+                    publisher_section = game_soup.find('div', class_='dev_row')
+                    if publisher_section:
+                        publisher_links = publisher_section.find_all('a')
+                        if len(publisher_links) > 1:
+                            publisher = publisher_links[1].text.strip()
+                    
+                    # Estrai l'URL dell'immagine
+                    image_url = None
+                    image_tag = game_soup.find('img', class_='game_header_image_full')
+                    if image_tag:
+                        image_url = image_tag.get('src', '')
+                    
+                    if not image_url:
+                        image_tag = game_soup.find('meta', property='og:image')
+                        if image_tag:
+                            image_url = image_tag.get('content', '')
+                    
+                    if not image_url:
+                        image_url = 'https://via.placeholder.com/150'
+                    
+                    platform = "PC"
+                    
+                    giochi.append({
+                        "titolo": title,
+                        "piattaforma": platform,
+                        "prezzo": prezzo_float,
+                        "immagine": image_url,
+                        "link": game_url,
+                        "data-rilascio": release_date,
+                        "descrizione": description,
+                        "generi": genres_str,
+                        "autore": publisher,
+                        "sito": "Steam",
+                        "slug": generate_slug(title, platform)
+                    })
+                    
+                except Exception as e:
+                    print(f"Errore nell'elaborazione della pagina del gioco {app_id}: {e}")
+                    continue
+                    
+            except Exception as e:
+                print(f"Errore nell'elaborazione di un risultato di gioco: {e}")
+                continue
+        
+        return giochi
+        
+    except Exception as e:
+        print(f"Errore durante lo scraping di Steam: {e}")
+        return []
+
+def confronta_prezzi(giochi_steam, giochi_ig):
+    giochi_migliori = {}
+    
+    # Prima aggiungiamo tutti i giochi PC da Instant Gaming
+    for gioco in giochi_ig:
+        titolo = gioco["titolo"]
+        piattaforma = gioco["piattaforma"].lower()
+        prezzo_ig = gioco["prezzo"]
+        
+        # Crea una chiave univoca per ogni gioco combinando titolo e piattaforma
+        chiave = f"{titolo}_{piattaforma}"
+        
+        # Aggiungi solo i giochi PC o per altre piattaforme
+        giochi_migliori[chiave] = {
+            "titolo": titolo,
+            "piattaforma": piattaforma,
+            "prezzo": prezzo_ig,
+            "prezzo_steam": None,  # Ancora da definire
+            "prezzo_ig": prezzo_ig,
+            "immagine": gioco["immagine"],
+            "link": gioco["link"],
+            "descrizione": gioco.get("descrizione", "Nessuna descrizione disponibile"),
+            "sito": "Instant Gaming",
+            "slug": gioco["slug"]
+        }
+    
+    # Poi confrontiamo con i giochi di Steam (solo PC)
+    for gioco_steam in giochi_steam:
+        titolo_steam = gioco_steam["titolo"]
+        prezzo_steam = gioco_steam["prezzo"]
+        
+        # Verifica se esiste un gioco simile da IG per PC
+        miglior_match = None
+        miglior_punteggio = 0
+        
+        for chiave, gioco_ig in giochi_migliori.items():
+            if gioco_ig["piattaforma"].lower() == "pc":
+                # Usa fuzzy matching per confrontare i titoli
+                punteggio = fuzz.ratio(titolo_steam.lower(), gioco_ig["titolo"].lower())
+                if punteggio > miglior_punteggio and punteggio >= 80:  # Soglia di similarità
+                    miglior_punteggio = punteggio
+                    miglior_match = chiave
+        
+        if miglior_match:
+            # Abbiamo trovato un gioco simile su IG, confrontiamo i prezzi
+            giochi_migliori[miglior_match]["prezzo_steam"] = prezzo_steam
+            
+            # Confronta i prezzi e scegli il più basso
+            if prezzo_steam is not None and (giochi_migliori[miglior_match]["prezzo_ig"] is None 
+                                           or prezzo_steam < giochi_migliori[miglior_match]["prezzo_ig"]):
+                giochi_migliori[miglior_match]["prezzo"] = prezzo_steam
+                giochi_migliori[miglior_match]["sito"] = "Steam"
+                giochi_migliori[miglior_match]["link"] = gioco_steam["link"]
+        else:
+            # Non abbiamo trovato un gioco simile su IG, aggiungiamo il gioco Steam
+            chiave = f"{titolo_steam}_pc"
+            giochi_migliori[chiave] = {
+                "titolo": titolo_steam,
+                "piattaforma": "pc",
+                "prezzo": prezzo_steam,
+                "prezzo_steam": prezzo_steam,
+                "prezzo_ig": None,  # Non disponibile
+                "immagine": gioco_steam["immagine"],
+                "link": gioco_steam["link"],
+                "descrizione": gioco_steam.get("descrizione", "Nessuna descrizione disponibile"),
+                "sito": "Steam",
+                "slug": gioco_steam["slug"]
+            }
+    
+    # Converte il dizionario in una lista
+    return list(giochi_migliori.values())
 
 def cerca_giochi(query):
     global searched_games
@@ -90,20 +308,57 @@ def cerca_giochi(query):
     if not query:
         return []
     
-    url = f"https://www.instant-gaming.com/it/ricerca/?query={query}"
+    IG_url = f"https://www.instant-gaming.com/it/ricerca/?query={query}"
+    Steam_url = f"https://store.steampowered.com/search/?term={query}"
     
     try:
-        searched_games = scraping(url)
-        return searched_games
+        ig_games = IG_scraping(IG_url)   # Giochi da Instant Gaming
+        print(f"Trovati {len(ig_games)} giochi su Instant Gaming")
     except Exception as e:
-        print(f"Errore durante la ricerca: {e}")
-        return [{"titolo": "Errore nel caricamento", "piattaforma": "N/A", "prezzo": None, "immagine": "https://via.placeholder.com/150", "link": "#"}]
+        print(f"Errore durante lo scraping di Instant Gaming: {e}")
+        ig_games = []
+    
+    try:
+        steam_games = Steam_scraping(Steam_url, query, 15)  # Giochi da Steam
+        print(f"Trovati {len(steam_games)} giochi su Steam")
+    except Exception as e:
+        print(f"Errore durante lo scraping di Steam: {e}")
+        steam_games = []
+    
+    if not ig_games and not steam_games:
+        return [{"titolo": "Nessun risultato trovato", "piattaforma": "N/A", "prezzo": None, "immagine": "https://via.placeholder.com/150", "link": "#", "slug": "no-results"}]
+    
+    searched_games = confronta_prezzi(steam_games, ig_games)  # Unisce i risultati
+    return searched_games
 
 def load_trending_games():
     global saved_games
     try:
-        url = "https://www.instant-gaming.com/it/?utm_source=google&utm_medium=cpc&utm_campaign=1063495812&utm_content=52470996152&utm_term=instant-gaming&gad_source=1&gclid=Cj0KCQjw16O_BhDNARIsAC3i2GBqET0MaxZu3jx5birZ3yGQmmbgbbEr3OYGJLQs_GMcarD2QntMipoaAivXEALw_wcB"
-        saved_games = scraping(url)
+        # Carica i giochi di tendenza da Instant Gaming
+        IG_url = "https://www.instant-gaming.com/it/"
+        ig_games = IG_scraping(IG_url)
+        
+        # Filtra solo i giochi PC
+        pc_games = [game for game in ig_games if game["piattaforma"].lower() == "pc"]
+        
+        # Estrai i titoli dei giochi PC
+        titoli_pc = [game["titolo"] for game in pc_games]
+        
+        # Crea una ricerca combinata per Steam (primi 5 giochi per evitare ricerche troppo ampie)
+        # Steam ha limiti su quanto può essere lunga una query di ricerca
+        steam_games = []
+        for titolo in titoli_pc[:10]:  # Limita a 10 giochi per evitare problemi
+            try:
+                Steam_url = f"https://store.steampowered.com/search/?term={titolo}"
+                risultati = Steam_scraping(Steam_url, titolo, 1)
+                steam_games.extend(risultati)
+                # Aggiungi un piccolo ritardo per evitare di sovraccaricare Steam
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"Errore durante la ricerca su Steam per {titolo}: {e}")
+        
+        # Confronta i prezzi e ottieni i migliori
+        saved_games = confronta_prezzi(steam_games, ig_games)
         return saved_games
     except Exception as e:
         print(f"Errore durante il caricamento dei giochi di tendenza: {e}")
@@ -129,9 +384,23 @@ def search():
 def game_details(slug):
     all_games = saved_games + searched_games
 
+    gioco_selezionato = None
+    prezzo_steam = "Non disponibile"
+    prezzo_ig = "Non disponibile"
+
     for gioco in all_games:
         if gioco["slug"] == slug:
-            return render_template('game.html', game=gioco)
+            if gioco_selezionato is None:
+                gioco_selezionato = gioco  # Salva il primo risultato
+
+            # Controlla il prezzo da Steam e Instant Gaming
+            if "steam" in gioco["link"]:
+                prezzo_steam = f"{gioco['prezzo']}€" if gioco["prezzo"] else "Non disponibile"
+            else:
+                prezzo_ig = f"{gioco['prezzo']}€" if gioco["prezzo"] else "Non disponibile"
+    
+    if gioco_selezionato:
+        return render_template('game.html', game=gioco_selezionato, prezzo_steam=prezzo_steam, prezzo_ig=prezzo_ig)
 
     return "Gioco non trovato", 404
 
