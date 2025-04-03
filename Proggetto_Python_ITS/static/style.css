@@ -22,11 +22,17 @@
 
 
 
+
+
+
+
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
+
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -35,12 +41,14 @@ body {
     line-height: 1.6;
 }
 
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
     overflow: hidden;
 }
+
 
 /* Header */
 header {
@@ -52,15 +60,24 @@ header {
     margin-bottom: 2rem;
 }
 
+
 h1 {
     margin-bottom: 1rem;
 }
+
+
+header a {
+    text-decoration: none;
+    color: white;
+}
+
 
 .auth-links {
     position: absolute;
     top: 20px;
     right: 20px;
 }
+
 
 .auth-links a {
     color: #fff;
@@ -72,9 +89,11 @@ h1 {
     font-weight: bold;
 }
 
+
 .auth-links a:hover {
     background: var(--hover-accent);
 }
+
 
 /* Search */
 .search-container {
@@ -84,17 +103,18 @@ h1 {
     margin: 20px auto;
 }
 
+
 .search-form {
     display: flex;
     width: 100%;
-    align-items: stretch;
-    /* Allinea gli elementi in altezza */
+    background-color: var(--card-color);
+    box-shadow: none;
 }
 
+
 .search-form input {
-    padding: 12px 20px;
+    /* padding: 12px 20px; */
     font-size: 1rem;
-    border: 2px solid #841919;
     border-radius: 25px 0 0 25px;
     width: 80%;
     outline: none;
@@ -105,9 +125,11 @@ h1 {
     /* Altezza fissa */
 }
 
+
 .search-form input:focus {
     border-color: var(--secondary-color);
 }
+
 
 .search-form button {
     background-color: var(--accent-color);
@@ -118,32 +140,33 @@ h1 {
     cursor: pointer;
     transition: background-color 0.3s;
     margin: 0;
-    /* Rimuovi eventuali margini */
     height: 46px;
-    /* Stessa altezza dell'input */
     display: flex;
-    align-items: center;
-    justify-content: center;
+    max-width: 15%;
 }
+
 
 .search-form button:hover {
     background-color: var(--hover-accent);
 }
 
+
 #results-title {
     margin: 1.5rem 0;
-    color: var(--primary-color);
+    color: white;
     text-align: center;
 }
+
 
 /* Game Grid */
 .games-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     padding: 20px;
     margin-bottom: 2rem;
 }
+
 
 .game-card {
     background-color: var(--card-color);
@@ -155,15 +178,18 @@ h1 {
     flex-direction: column;
 }
 
+
 .game-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+
 .game-image {
     max-width: 100%;
     overflow: hidden;
 }
+
 
 .game-image img {
     width: 100%;
@@ -173,9 +199,11 @@ h1 {
     border-radius: 5px 5px 0 0;
 }
 
+
 .game-card:hover .game-image img {
     transform: scale(1.05);
 }
+
 
 .game-info {
     padding: 15px;
@@ -183,22 +211,30 @@ h1 {
     text-align: center;
 }
 
+
 .game-title {
     font-size: 1.1em;
     font-weight: bold;
     margin-bottom: 10px;
-    color: var(--primary-color);
+    color: var(--secondary-color);
     display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    height: 2.4em;
+    height: 3.4em;
 }
+
+
+.sito {
+    font-weight: bold;
+}
+
 
 .game-price {
     color: var(--accent-color);
     font-weight: bold;
     font-size: 1.2rem;
 }
+
 
 .game-link {
     display: block;
@@ -211,9 +247,11 @@ h1 {
     transition: background-color 0.3s;
 }
 
+
 .game-link:hover {
     background-color: var(--hover-accent);
 }
+
 
 #no-results {
     text-align: center;
@@ -222,11 +260,13 @@ h1 {
     color: #777;
 }
 
+
 /* Flash Messages */
 .flash-messages {
     text-align: center;
     margin: 20px 0;
 }
+
 
 .flash {
     padding: 10px;
@@ -235,20 +275,24 @@ h1 {
     font-weight: bold;
 }
 
+
 .flash.success {
     background: #4CAF50;
     color: white;
 }
+
 
 .flash.danger {
     background: #e74c3c;
     color: white;
 }
 
+
 .flash.warning {
     background: #f1c40f;
     color: black;
 }
+
 
 /* Forms */
 form {
@@ -260,11 +304,13 @@ form {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+
 form label {
     display: block;
     font-weight: bold;
     margin-top: 10px;
 }
+
 
 form input {
     width: 100%;
@@ -273,6 +319,7 @@ form input {
     border: 1px solid #ccc;
     border-radius: 5px;
 }
+
 
 form button {
     background: var(--accent-color);
@@ -286,14 +333,36 @@ form button {
     font-weight: bold;
 }
 
+
 form button:hover {
     background: var(--hover-accent);
 }
+
+
+.login-form label {
+    color: var(--primary-color);
+}
+
+
+.back-to-home {
+    text-decoration: none;
+    color: white;
+    padding: 10px 15px;
+    background-color: var(--secondary-color);
+    border-radius: 10px;
+}
+
+
+.back-to-home:hover {
+    background-color: #236d9f;
+}
+
 
 p {
     text-align: center;
     margin-top: 10px;
 }
+
 
 p a {
     color: var(--accent-color);
@@ -301,17 +370,19 @@ p a {
     text-decoration: none;
 }
 
+
 p a:hover {
     text-decoration: underline;
 }
+
 
 footer {
     text-align: center;
     margin-top: 2rem;
     padding-top: 1rem;
-    border-top: 1px solid #ddd;
     color: #777;
 }
+
 
 .return-button {
     display: block;
@@ -327,9 +398,11 @@ footer {
     width: fit-content;
 }
 
+
 .return-button:hover {
     background-color: var(--hover-accent);
 }
+
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -337,9 +410,11 @@ footer {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     }
 
+
     .container {
         padding: 10px;
     }
+
 
     .auth-links {
         position: static;
@@ -349,10 +424,12 @@ footer {
     }
 }
 
+
 @media (max-width: 480px) {
     .games-grid {
         grid-template-columns: 1fr;
     }
+
 
     .search-form input {
         width: 70%;
@@ -360,37 +437,62 @@ footer {
         /* Mantieni la stessa altezza anche in mobile */
     }
 
+
     .search-form button {
         height: 46px;
         /* Mantieni la stessa altezza anche in mobile */
     }
 }
 
+
 footer {
-    background-color: #f8f9fa;
+    background-color: var(--background-color);
     padding: 20px;
     text-align: center;
     margin-top: 30px;
 }
+
 
 .footer-content {
     max-width: 1200px;
     margin: 0 auto;
 }
 
+
 .back-to-top {
-    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50px;
+    width: fit-content;
+    padding: 10px 10px;
     background-color: #007bff;
     color: white;
     text-decoration: none;
     border-radius: 5px;
     font-size: 16px;
     cursor: pointer;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
 }
+
+
+.back-to-top svg {
+    width: 20px;
+}
+
+
+.button {
+    text-decoration: none;
+    color: white;
+}
+
 
 .back-to-top:hover {
     background-color: #0056b3;
 }
+
 
 /* Stili per la sezione wishlist */
 .wishlist {
@@ -401,12 +503,14 @@ footer {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+
 .wishlist h2 {
     color: #ffffff;
     margin-bottom: 20px;
     border-bottom: 1px solid #374151;
     padding-bottom: 10px;
 }
+
 
 .empty-wishlist,
 .login-prompt {
@@ -415,26 +519,49 @@ footer {
     margin: 20px 0;
 }
 
+
 .game-actions {
     display: flex;
     justify-content: space-between;
     margin-top: 10px;
+    position: relative;
 }
 
+
+.game-link {
+    width: 100%;
+    text-align: center;
+}
+
+
+.game-details {
+    display: flex;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+
 .wishlist-link {
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
     display: inline-block;
     font-size: 1.5rem;
     cursor: pointer;
     transition: transform 0.2s;
+    text-decoration: none;
 }
+
 
 .wishlist-link:hover {
     transform: scale(1.2);
 }
 
+
 .wishlist-link.active {
     color: #ef4444;
 }
+
 
 .remove-link {
     color: #ef4444;
@@ -446,7 +573,9 @@ footer {
     font-size: 0.8rem;
 }
 
+
 .remove-link:hover {
     background-color: #ef4444;
     color: white;
 }
+

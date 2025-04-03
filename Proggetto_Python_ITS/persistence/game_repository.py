@@ -5,7 +5,7 @@ import re
 from fuzzywuzzy import fuzz
 import time
 import urllib.parse
-
+    
 class GameRepository:
     def __init__(self):
         self.steam_cache = {}  # Cache Steam search results

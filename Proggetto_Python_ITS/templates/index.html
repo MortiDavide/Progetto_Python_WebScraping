@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="it">
 
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,10 +9,13 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 
+
 <body>
     <div class="container">
         <header>
-            <h1 id="titolo">PyGaming</h1>
+            <a href="\">
+                <h1 id="titolo">PyGaming</h1>
+            </a>
             <div class="auth-links">
                 {% if session['user_id'] %}
                 <span>Benvenuto, {{ session['username'] }}!</span>
@@ -24,10 +28,16 @@
             <div class="search-container">
                 <form class="search-form" action="/" method="GET">
                     <input type="text" id="search-input" name="q" placeholder="Cerca un gioco..." value="{{ query }}">
-                    <button type="submit" id="search-button">🔍</button>
+                    <button type="submit" id="search-button"><svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                    </button>
                 </form>
             </div>
         </header>
+
 
         <main>
             <h2 id="results-title">
@@ -38,12 +48,14 @@
                 {% endif %}
             </h2>
 
+
             <!-- Se ci sono giochi, visualizza il grafico -->
             {% if graph_html %}
             <div class="graph-container">
                 {{ graph_html | safe }}
             </div>
             {% endif %}
+
 
             <!-- Visualizza i giochi trovati -->
             {% if games %}
@@ -54,8 +66,8 @@
                         <img src="{{ game.immagine }}" alt="{{ game.titolo }}">
                     </div>
                     <div class="game-info">
-                        <h3 class="game-title">{{ game.titolo }} ({{ game.piattaforma }})</h3>
-                        <p>{{ game.sito }}</p>
+                        <h3 class="game-title">{{ game.titolo }}</h3>
+                        <p class="sito">{{ game.sito }}</p>
                         <p class="game-price">
                             {% if game.prezzo %}
                             €{{ "%.2f"|format(game.prezzo) }}
@@ -83,6 +95,7 @@
                 <p>Nessun risultato trovato per "{{ query }}". Prova con un'altra ricerca.</p>
             </div>
             {% endif %}
+
 
             <div class="wishlist">
                 <h2>I Miei Giochi Preferiti</h2>
@@ -124,16 +137,23 @@
                 <a href="{{ url_for('login') }}" class="button">Login</a>
                 {% endif %}
             </div>
+            <a href="#titolo" class="back-to-top"><svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
+                </svg>
+            </a>
         </main>
+
 
         <!-- Footer -->
         <footer>
-            <div class="footer-content">
-                <a href="#titolo" class="back-to-top">Torna su</a>
-            </div>
+            <p>made by Ashley Dave Austria & Davide Morti</p>
         </footer>
     </div>
 
+
 </body>
 
+
 </html>
+
