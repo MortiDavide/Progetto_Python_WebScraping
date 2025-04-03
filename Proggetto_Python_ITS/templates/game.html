@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ game.titolo }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>{{ game.titolo }}</h1>
+            <a href="/" class="return-button">Torna indietro</a>
+        </header>
+        <main>
+            <div class="game-details">
+                <img src="{{ game.immagine }}" alt="{{ game.titolo }}">
+                <div class="game-info">
+                    <h2>{{ game.titolo }} ({{ game.piattaforma }})</h2>
+                    <p class="best-price">Prezzo migliore: <strong>{{ "%.2f"|format(game.prezzo) }}€</strong> su {{
+                        game.sito }}</p>
+
+                    <div class="price-comparison">
+                        <h3>Confronto prezzi:</h3>
+                        <p>Steam: {% if game.prezzo_steam %}{{ "%.2f"|format(game.prezzo_steam) }}€{% else %}Non
+                            disponibile{% endif %}</p>
+                        <p>Instant Gaming: {% if game.prezzo_ig %}{{ "%.2f"|format(game.prezzo_ig) }}€{% else %}Non
+                            disponibile{% endif %}</p>
+                    </div>
+
+                    <a href="{{ game.link }}" target="_blank" class="game-link">Acquista al prezzo migliore</a>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>
