@@ -6,15 +6,15 @@ class UserService:
         self.user_repository = UserRepository()
     
     def validate_user(self, username, password):
-        """Validate user credentials"""
+        """Valida le credenziali dell'utente"""
         users = self.user_repository.load_users()
         return username in users and users[username] == password
     
     def user_exists(self, username):
-        """Check if a user already exists"""
+        """Controlla se un utente esiste già"""
         users = self.user_repository.load_users()
         return username in users
     
     def register_user(self, username, password):
-        """Register a new user"""
+        """Registra un nuovo utente"""
         self.user_repository.save_user(username, password)

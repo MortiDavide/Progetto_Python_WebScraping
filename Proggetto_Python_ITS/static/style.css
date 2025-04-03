@@ -1,21 +1,21 @@
-/* style */
+/* stile */
 :root {
     --primary-color: #1e2a47;
-    /* Dark blue-gray for text and primary elements */
+    /* Blu-grigio scuro per testi ed elementi primari */
     --secondary-color: #2980b9;
-    /* Vivid blue for accents like buttons and links */
+    /* Blu vivace per accenti come pulsanti e link */
     --accent-color: #c0392b;
-    /* Deep red for highlighting elements */
+    /* Rosso intenso per elementi in evidenza */
     --hover-accent: #e74c3c;
-    /* Lighter red for hover effects */
+    /* Rosso più chiaro per effetti hover */
     --background-color: #2c3e50;
-    /* Dark slate background for the body */
+    /* Sfondo grigio scuro per il corpo */
     --card-color: #34495e;
-    /* Darker card color for a subtle contrast */
+    /* Colore carta più scuro per un contrasto sottile */
     --text-color: #ecf0f1;
-    /* Light grayish-white for readable text */
+    /* Bianco-grigiastro chiaro per testo leggibile */
     --header-bg-color: #34495e;
-    /* Darker blue-gray for the header */
+    /* Blu-grigio più scuro per l'header */
 }
 
 
@@ -95,7 +95,7 @@ header a {
 }
 
 
-/* Search */
+/* Ricerca */
 .search-container {
     display: flex;
     justify-content: center;
@@ -158,7 +158,7 @@ header a {
 }
 
 
-/* Game Grid */
+/* Griglia dei Giochi */
 .games-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -261,7 +261,7 @@ header a {
 }
 
 
-/* Flash Messages */
+/* Messaggi Flash */
 .flash-messages {
     text-align: center;
     margin: 20px 0;
@@ -294,7 +294,7 @@ header a {
 }
 
 
-/* Forms */
+/* Moduli */
 form {
     background: white;
     padding: 20px;
@@ -578,4 +578,3 @@ footer {
     background-color: #ef4444;
     color: white;
 }
-

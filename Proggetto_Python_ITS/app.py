@@ -5,7 +5,7 @@ from interface.routes import register_routes
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
-# Register all routes
+# Registra tutte le route
 register_routes(app)
 
 if __name__ == '__main__':

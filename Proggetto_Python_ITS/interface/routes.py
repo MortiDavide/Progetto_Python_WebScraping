@@ -13,17 +13,17 @@ def register_routes(app):
     def index():
         query = request.args.get('q', '').strip()
         
-        # Get games based on query or trending
+        # Ottieni i giochi in base alla query o di tendenza
         if query:
             games = game_service.search_games(query)
         else:
             games = game_service.get_trending_games()
         
-        # Get wishlist data
+        # Ottieni i dati della wishlist
         wishlist_games = wishlist_service.load_wishlist()
         user_wishlist_slugs = [game["slug"] for game in wishlist_games]
         
-        # Generate price comparison graph
+        # Genera il grafico di confronto dei prezzi
         graph_html = game_service.generate_price_graph(games)
         
         return render_template('index.html', 
@@ -40,13 +40,13 @@ def register_routes(app):
         if not query:
             return redirect(url_for('index'))
         
-        # Get search results
+        # Ottieni i risultati della ricerca
         games = game_service.search_games(query)
         
-        # Generate graph for search results
+        # Genera il grafico per i risultati della ricerca
         graph_html = game_service.generate_price_graph(games)
         
-        # Get wishlist data per l'utente attuale
+        # Ottieni i dati della wishlist per l'utente attuale
         wishlist_games = wishlist_service.load_wishlist()
         user_wishlist_slugs = [game["slug"] for game in wishlist_games]
         

@@ -22,7 +22,7 @@ class WishlistService:
         username = self.get_current_username()
         if not username:
             return False  # Non può aggiungere se l'utente non ha effettuato l'accesso
-        
+          
         self.wishlist_repository.save_wishlist(
             username,
             game["titolo"],

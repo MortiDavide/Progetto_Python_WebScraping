@@ -8,10 +8,10 @@ import urllib.parse
     
 class GameRepository:
     def __init__(self):
-        self.steam_cache = {}  # Cache Steam search results
+        self.steam_cache = {}  # Cache per i risultati di ricerca su Steam
     
     def search_games(self, query):
-        """Search for games across multiple platforms"""
+        """Cerca giochi su diverse piattaforme"""
         if not query:
             return []
         
@@ -24,25 +24,25 @@ class GameRepository:
             print(f"Errore durante lo scraping di Instant Gaming: {e}")
             ig_games = []
         
-        # For each Instant Gaming game, try to find a matching Steam game
+        # Per ogni gioco di Instant Gaming, prova a trovare un gioco corrispondente su Steam
         steam_games = []
         for ig_game in ig_games:
             if ig_game["piattaforma"].lower() == "pc":
                 try:
-                    # Use the exact game title for better matching
+                    # Usa il titolo esatto del gioco per un matching migliore
                     game_title = ig_game["titolo"]
                     
-                    # Remove any platform or edition information from the title
+                    # Rimuovi qualsiasi informazione sulla piattaforma o edizione dal titolo
                     clean_title = re.sub(r'\s*(\(PC\)|\(Steam\)|\(Epic\)|\- \w+ Edition).*$', '', game_title)
                     
-                    # Try to find the game on Steam
+                    # Prova a trovare il gioco su Steam
                     Steam_url = f"https://store.steampowered.com/search/?term={urllib.parse.quote(clean_title)}"
                     steam_result = self._find_exact_game_on_steam(Steam_url, clean_title)
                     
                     if steam_result:
                         steam_games.append(steam_result)
                     
-                    # Small delay to avoid rate limiting
+                    # Piccolo ritardo per evitare limiti di frequenza
                     time.sleep(0.2)
                 except Exception as e:
                     print(f"Errore durante la ricerca su Steam per {ig_game['titolo']}: {e}")
@@ -52,10 +52,10 @@ class GameRepository:
         if not ig_games and not steam_games:
             return [{"titolo": "Nessun risultato trovato", "piattaforma": "N/A", "prezzo": None, "immagine": "https://via.placeholder.com/150", "link": "#", "slug": "no-results"}]
         
-        # Compare prices and combine results
+        # Confronta i prezzi e combina i risultati
         combined_games = self._compare_prices(steam_games, ig_games)
         
-        # Filter games without valid prices
+        # Filtra i giochi senza prezzi validi
         combined_games = [game for game in combined_games if game['prezzo'] is not None]
         
         if not combined_games:
@@ -64,36 +64,36 @@ class GameRepository:
         return combined_games
     
     def load_trending_games(self):
-        """Load trending games from platforms"""
+        """Carica i giochi in tendenza dalle piattaforme"""
         try:
-            # Load trending games from Instant Gaming
+            # Carica i giochi in tendenza da Instant Gaming
             IG_url = "https://www.instant-gaming.com/it/"
             ig_games = self._scrape_instant_gaming(IG_url)
             
-            # Filter only PC games
+            # Filtra solo i giochi per PC
             pc_games = [game for game in ig_games if game["piattaforma"].lower() == "pc"]
             
-            # For each trending PC game, try to find it on Steam
+            # Per ogni gioco PC in tendenza, prova a trovarlo su Steam
             steam_games = []
             for pc_game in pc_games:
                 try:
-                    # Clean up the title for better matching
+                    # Pulisci il titolo per un matching migliore
                     game_title = pc_game["titolo"]
                     clean_title = re.sub(r'\s*(\(PC\)|\(Steam\)|\(Epic\)|\- \w+ Edition).*$', '', game_title)
                     
-                    # Search on Steam
+                    # Cerca su Steam
                     Steam_url = f"https://store.steampowered.com/search/?term={urllib.parse.quote(clean_title)}"
                     steam_result = self._find_exact_game_on_steam(Steam_url, clean_title)
                     
                     if steam_result:
                         steam_games.append(steam_result)
                     
-                    # Add a small delay to avoid overloading Steam
+                    # Aggiungi un piccolo ritardo per evitare di sovraccaricare Steam
                     time.sleep(0.2)
                 except Exception as e:
                     print(f"Errore durante la ricerca su Steam per {pc_game['titolo']}: {e}")
             
-            # Compare prices and get the best deals
+            # Confronta i prezzi e ottieni le migliori offerte
             trending_games = self._compare_prices(steam_games, ig_games)
             return trending_games
         except Exception as e:
@@ -101,7 +101,7 @@ class GameRepository:
             return []
     
     def _scrape_instant_gaming(self, url):
-        """Scrape games from Instant Gaming"""
+        """Scarica i dati dei giochi da Instant Gaming"""
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
@@ -143,12 +143,12 @@ class GameRepository:
 
                 link_url = link['href'] if link and 'href' in link.attrs else "#"
                 
-                # Clean up the title for better comparison with Steam
+                # Pulisci il titolo per un confronto migliore con Steam
                 clean_title = re.sub(r'\s*(\(PC\)|\(Steam\)|\(Epic\)|\- \w+ Edition).*$', '', titolo_text)
                 
                 giochi.append({
                     "titolo": titolo_text,
-                    "titolo_clean": clean_title,  # Store clean title for better matching
+                    "titolo_clean": clean_title,  # Memorizza il titolo pulito per un matching migliore
                     "piattaforma": platform,
                     "prezzo": prezzo_float,
                     "immagine": immagine_url,
@@ -160,51 +160,51 @@ class GameRepository:
         return giochi
     
     def _find_exact_game_on_steam(self, url, title):
-        """Find a specific game on Steam by title"""
-        # First check if we've already searched for this title
+        """Trova un gioco specifico su Steam attraverso il titolo"""
+        # Prima controlla se abbiamo già cercato questo titolo
         if title in self.steam_cache:
             return self.steam_cache[title]
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
-            'Cookie': 'birthtime=536457201; mature_content=1;'  # Set age verification cookie
+            'Cookie': 'birthtime=536457201; mature_content=1;'  # Imposta il cookie di verifica dell'età
         }
 
         try:
             res = requests.get(url, headers=headers)
             soup = BeautifulSoup(res.text, 'html.parser')
             
-            # Find all game result links
+            # Trova tutti i link dei risultati dei giochi
             game_links = soup.find_all('a', class_='search_result_row')
             
             best_match = None
             best_score = 0
             
-            for link in game_links[:5]:  # Only check top 5 results
+            for link in game_links[:5]:  # Controlla solo i primi 5 risultati
                 game_title_element = link.find('span', class_='title')
                 if not game_title_element:
                     continue
                 
                 game_title = game_title_element.text.strip()
                 
-                # Use fuzzy matching to find the best match
+                # Utilizza il matching fuzzy per trovare la corrispondenza migliore
                 score = fuzz.ratio(title.lower(), game_title.lower())
                 
-                if score > best_score and score >= 75:  # Must be at least 75% similar
+                if score > best_score and score >= 75:  # Deve essere simile almeno al 75%
                     best_score = score
                     
-                    # Extract price
+                    # Estrai il prezzo
                     price_float = None
                     
-                    # Try to get discounted price first
+                    # Prima prova a ottenere il prezzo scontato
                     price_tag = link.find('div', class_='discount_final_price')
                     if price_tag:
                         price = price_tag.text.strip()
                         
-                        # Skip free games
+                        # Salta i giochi gratuiti
                         if "Free" not in price and "Gratuito" not in price and "Gratis" not in price:
-                            # Extract numbers
+                            # Estrai i numeri
                             cleaned_price = re.sub(r'[^\d,\.]', '', price)
                             cleaned_price = cleaned_price.replace(',', '.')
                             
@@ -214,15 +214,15 @@ class GameRepository:
                                 except ValueError:
                                     pass
                     
-                    # If no discounted price, try regular price
+                    # Se non c'è un prezzo scontato, prova con il prezzo normale
                     if price_float is None:
                         price_tag = link.find('div', class_='search_price')
                         if price_tag:
                             price = price_tag.text.strip()
                             
-                            # Skip free games
+                            # Salta i giochi gratuiti
                             if "Free" not in price and "Gratuito" not in price and "Gratis" not in price:
-                                # Extract numbers
+                                # Estrai i numeri
                                 cleaned_price = re.sub(r'[^\d,\.]', '', price)
                                 cleaned_price = cleaned_price.replace(',', '.')
                                 
@@ -232,9 +232,9 @@ class GameRepository:
                                     except ValueError:
                                         pass
                     
-                    # Only consider this a match if we found a price
+                    # Considera una corrispondenza solo se abbiamo trovato un prezzo
                     if price_float is not None:
-                        # Get image URL
+                        # Ottieni l'URL dell'immagine
                         image_url = None
                         image_element = link.find('div', class_='col search_capsule')
                         if image_element:
@@ -247,7 +247,7 @@ class GameRepository:
                         
                         best_match = {
                             "titolo": game_title,
-                            "titolo_clean": game_title,  # Store clean title for reference
+                            "titolo_clean": game_title,  # Memorizza il titolo pulito per riferimento
                             "piattaforma": "PC",
                             "prezzo": price_float,
                             "immagine": image_url,
@@ -257,7 +257,7 @@ class GameRepository:
                             "slug": self._generate_slug(game_title, "PC")
                         }
             
-            # Cache the result
+            # Salva in cache il risultato
             self.steam_cache[title] = best_match
             return best_match
             
@@ -266,23 +266,23 @@ class GameRepository:
             return None
     
     def _compare_prices(self, giochi_steam, giochi_ig):
-        """Compare prices between Steam and Instant Gaming"""
+        """Confronta i prezzi tra Steam e Instant Gaming"""
         giochi_migliori = {}
         
-        # First add all games from Instant Gaming
+        # Prima aggiungi tutti i giochi da Instant Gaming
         for gioco in giochi_ig:
             titolo = gioco["titolo"]
             piattaforma = gioco["piattaforma"].lower()
             prezzo_ig = gioco["prezzo"]
             
-            # Create a unique key for each game
+            # Crea una chiave unica per ogni gioco
             chiave = f"{titolo}_{piattaforma}"
             
             giochi_migliori[chiave] = {
                 "titolo": titolo,
                 "piattaforma": piattaforma,
                 "prezzo": prezzo_ig,
-                "prezzo_steam": None,  # To be filled if found
+                "prezzo_steam": None,  # Da compilare se trovato
                 "prezzo_ig": prezzo_ig,
                 "immagine": gioco["immagine"],
                 "link": gioco["link"],
@@ -291,52 +291,52 @@ class GameRepository:
                 "slug": gioco["slug"]
             }
         
-        # Then compare with Steam games (PC only)
+        # Poi confronta con i giochi Steam (solo PC)
         for gioco_steam in giochi_steam:
-            if not gioco_steam:  # Skip None values
+            if not gioco_steam:  # Salta i valori None
                 continue
                 
             titolo_steam = gioco_steam["titolo"]
             prezzo_steam = gioco_steam["prezzo"]
             
-            # Check if there's a similar game from IG for PC
+            # Controlla se c'è un gioco simile da IG per PC
             miglior_match = None
             miglior_punteggio = 0
             
             for chiave, gioco_ig in giochi_migliori.items():
                 if gioco_ig["piattaforma"].lower() == "pc":
-                    # Use fuzzy matching to compare titles
+                    # Usa il matching fuzzy per confrontare i titoli
                     punteggio = fuzz.ratio(titolo_steam.lower(), gioco_ig["titolo"].lower())
                     
-                    # Also try with the clean title if available
+                    # Prova anche con il titolo pulito se disponibile
                     if "titolo_clean" in gioco_steam:
                         clean_score = fuzz.ratio(gioco_steam["titolo_clean"].lower(), gioco_ig["titolo"].lower())
                         punteggio = max(punteggio, clean_score)
                     
-                    if punteggio > miglior_punteggio and punteggio >= 70:  # 70% similarity threshold
+                    if punteggio > miglior_punteggio and punteggio >= 70:  # Soglia di somiglianza del 70%
                         miglior_punteggio = punteggio
                         miglior_match = chiave
             
             if miglior_match:
-                # We found a similar game on IG, compare prices
+                # Abbiamo trovato un gioco simile su IG, confronta i prezzi
                 giochi_migliori[miglior_match]["prezzo_steam"] = prezzo_steam
                 
-                # Compare prices and choose the lowest
+                # Confronta i prezzi e scegli il più basso
                 if prezzo_steam is not None and (giochi_migliori[miglior_match]["prezzo_ig"] is None 
                                                or prezzo_steam < giochi_migliori[miglior_match]["prezzo_ig"]):
                     giochi_migliori[miglior_match]["prezzo"] = prezzo_steam
                     giochi_migliori[miglior_match]["sito"] = "Steam"
                     giochi_migliori[miglior_match]["link"] = gioco_steam["link"]
             else:
-                # We didn't find a similar game on IG, add the Steam game
+                # Non abbiamo trovato un gioco simile su IG, aggiungi il gioco Steam
                 chiave = f"{titolo_steam}_pc"
-                if chiave not in giochi_migliori:  # Avoid duplicates
+                if chiave not in giochi_migliori:  # Evita i duplicati
                     giochi_migliori[chiave] = {
                         "titolo": titolo_steam,
                         "piattaforma": "pc",
                         "prezzo": prezzo_steam,
                         "prezzo_steam": prezzo_steam,
-                        "prezzo_ig": None,  # Not available
+                        "prezzo_ig": None,  # Non disponibile
                         "immagine": gioco_steam["immagine"],
                         "link": gioco_steam["link"],
                         "descrizione": gioco_steam.get("descrizione", "Nessuna descrizione disponibile"),
@@ -344,30 +344,30 @@ class GameRepository:
                         "slug": gioco_steam["slug"]
                     }
         
-        # Convert dictionary to list and sort by title
+        # Converti il dizionario in lista e ordina per titolo
         return sorted(list(giochi_migliori.values()), key=lambda x: x["titolo"])
     
     def _extract_platform(self, game_container):
-        """Find the platform of the game by analyzing all classes in the container"""
+        """Trova la piattaforma del gioco analizzando tutte le classi nel contenitore"""
         platform_classes = {
             "xbox": "Xbox",
             "playstation": "PlayStation",
         }
         
-        # Find all divs in the container
+        # Trova tutti i div nel contenitore
         all_divs = game_container.find_all("div")
 
         for div in all_divs:
             class_list = div.get("class", [])
             for cls in class_list:
                 for key, value in platform_classes.items():
-                    if key in cls.lower():  # Check if the class contains platform keyword
+                    if key in cls.lower():  # Controlla se la classe contiene la parola chiave della piattaforma
                         return value
         
-        return "PC"  # If we don't find anything, it's a PC game
+        return "PC"  # Se non troviamo nulla, è un gioco per PC
     
     def _generate_slug(self, title, platform):
-        """Generate a unique slug from title and platform"""
+        """Genera uno slug univoco dal titolo e dalla piattaforma"""
         base_slug = re.sub(r'[^a-zA-Z0-9]+', '-', title.lower()).strip('-')
         platform_slug = re.sub(r'[^a-zA-Z0-9]+', '-', platform.lower()).strip('-')
         return f"{base_slug}-{platform_slug}"
