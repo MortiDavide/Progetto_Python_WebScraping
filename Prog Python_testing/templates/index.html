@@ -11,7 +11,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>PyGaming</h1>
+            <h1 id="titolo">PyGaming</h1>
             <div class="auth-links">
                 {% if session['user_id'] %}
                 <span>Benvenuto, {{ session['username'] }}!</span>
@@ -78,18 +78,10 @@
         <!-- Footer -->
         <footer>
             <div class="footer-content">
-                <button class="back-to-top">Torna su</button>
+                <a href="#titolo" class="back-to-top">Torna su</a>
             </div>
         </footer>
     </div>
-
-    <script>
-        // Aggiungi la funzionalità per tornare in cima
-        document.querySelector('.back-to-top').addEventListener('click', function(e) {
-            e.preventDefault();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    </script>
 
 </body>
 
