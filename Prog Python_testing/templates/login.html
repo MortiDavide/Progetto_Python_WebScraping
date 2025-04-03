@@ -1,57 +1,40 @@
+<!-- login -->
 <!DOCTYPE html>
 <html lang="it">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PyGaming</title>
+    <title>Login</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
     <div class="container">
-        <header>
-            <h1 id="titolo">PyGaming</h1>
-            <div class="auth-links">
-                {% if session['user_id'] %}
-                <span>Benvenuto, {{ session['username'] }}!</span>
-                <a href="{{ url_for('logout') }}" class="button">Logout</a>
-                {% else %}
-                <a href="{{ url_for('login') }}" class="button">Login</a>
-                <a href="{{ url_for('register') }}" class="button">Registrati</a>
-                {% endif %}
-            </div>
-            <div class="search-container">
-                <form class="search-form" action="/" method="GET">
-                    <input type="text" id="search-input" name="q" placeholder="Cerca un gioco..." value="{{ query }}">
-                    <button type="submit" id="search-button">🔍</button>
-                </form>
-            </div>
-        </header>
+        <h2>Login</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <ul class="flashes">
+            {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
 
-        <main>
-            <h2 id="results-title">
-                {% if query %}
-                Risultati per: "{{ query }}"
-                {% else %}
-                Giochi in tendenza
-                {% endif %}
-            </h2>
+        <form action="{{ url_for('login') }}" method="POST">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
 
-            <!-- Only show the graph if there are valid games and graph_html -->
-            {% if graph_html and show_games %}
-            <div class="graph-container">
-                {{ graph_html | safe }}
-            </div>
-            {% endif %}
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
 
-            <!-- Show the game grid if there are games -->
-            {% if show_games %}
-            <div class="games-grid">
-                {% for game in games %}
-                <div class="game-card">
-                    <div class="game-image">
-                        <img src="{{ game.immagine }}" alt="{{ game.titolo }}">
-                    </div>
-                    <div class="game-info">
-                        <h
+            <button type="submit">Accedi</button>
+        </form>
+
+        <p>Non hai un account? <a href="{{ url_for('register') }}">Registrati</a></p>
+        <a href="{{ url_for('index') }}">Torna alla Home</a>
+    </div>
+</body>
+
+</html>

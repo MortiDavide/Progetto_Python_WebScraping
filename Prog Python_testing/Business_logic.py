@@ -1,71 +1,21 @@
-# app.py
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+# Business_logic.py
 import requests
 from bs4 import BeautifulSoup
 import re
-from fuzzywuzzy import fuzz  # Importa fuzzywuzzy
+from fuzzywuzzy import fuzz
 import time
-import pandas as pd
 import plotly.express as px
-import os
+from Persistenza import (
+    load_users as load_users_from_db, 
+    save_user as save_user_to_db, 
+    load_wishlist as load_wishlist_from_db, 
+    save_wishlist as save_wishlist_to_db, 
+    remove_from_wishlist as remove_from_wishlist_db
+)
 
-app = Flask(__name__)
-app.secret_key = 'supersecretkey'
-
+# Variabili globali
 saved_games = []
 searched_games = []
-users_file = 'users.csv'
-wishlist_file = "wishlist.csv"
-
-def load_users():
-    try:
-        # Load the CSV into a DataFrame
-        users_df = pd.read_csv(users_file, header=None, names=['username', 'password'])
-        # Convert the DataFrame into a dictionary for easier lookup
-        users = users_df.set_index('username').to_dict()['password']
-    except FileNotFoundError:
-        # Return an empty dictionary if the file does not exist
-        users = {}
-    return users
-
-
-def save_user(username, password):
-    new_user_df = pd.DataFrame([[username, password]], columns=['username', 'password'])
-    new_user_df.to_csv(users_file, mode='a', header=False, index=False)
-
-
-# Load the users into a dictionary
-users = load_users()
-
-
-def load_wishlist():
-    wishlist_games = []
-    if os.path.exists(wishlist_file):
-        df = pd.read_csv(wishlist_file)
-        for _, row in df.iterrows():
-            wishlist_games.append({
-                "titolo": row["titolo"],
-                "piattaforma": row["piattaforma"],
-                "prezzo": row["prezzo"],
-                "immagine": row["immagine"],
-                "link": row["link"],
-                "sito": row["sito"],
-                "slug": row["slug"]
-            })
-    return wishlist_games
-
-def save_wishlist(titolo,piattaforma,prezzo,immagine,link,sito,slug):
-    nuovo_gioco = pd.DataFrame([[titolo,piattaforma,prezzo,immagine,link,sito,slug]], columns=["titolo","piattaforma","prezzo","immagine","link","sito","slug"])
-
-    if os.path.exists(wishlist_file):
-        df = pd.read_csv(wishlist_file)
-        df = pd.concat([df, nuovo_gioco], ignore_index=True)
-    else:
-        df = nuovo_gioco
-
-    df.to_csv(wishlist_file, index=False)
-
-gioco_wishlist = load_wishlist()
 
 def generate_slug(title, platform):
     """Genera uno slug unico dal titolo e dalla piattaforma."""
@@ -383,7 +333,7 @@ def cerca_giochi(query):
         steam_games = []
     
     if not ig_games and not steam_games:
-        return [{"titolo": "Nessun risultato trovato", "piattaforma": "N/A", "prezzo": None, "immagine": "https://via.placeholder.com/150", "link": "#", "slug": "no-results"}]
+        return [{"titolo": "No games available", "piattaforma": "N/A", "prezzo": None, "immagine": "https://via.placeholder.com/150", "link": "#", "slug": "no-results"}]
     
     searched_games = confronta_prezzi(steam_games, ig_games)  # Unisce i risultati
 
@@ -392,7 +342,7 @@ def cerca_giochi(query):
     
     if not searched_games:
         return [{"titolo": "No games available", "piattaforma": "N/A", "prezzo": None, "immagine": "https://via.placeholder.com/150", "link": "#", "slug": "no-results"}]
-
+     
     return searched_games
 
 def load_trending_games():
@@ -428,177 +378,74 @@ def load_trending_games():
         print(f"Errore durante il caricamento dei giochi di tendenza: {e}")
         return []
 
-@app.route('/')
-def index():
-    global saved_games
-    if not saved_games:
-        saved_games = load_trending_games()
+def create_price_comparison_graph(games, query=None):
+    if not games:
+        return ""
     
-    query = request.args.get('q', '').strip()  # If no query, use an empty string
-    games = saved_games  # Default to trending games if no query is provided
+    title = f'Confronto Prezzi per: {query}' if query else 'Confronto Prezzi Steam vs Instant Gaming'
     
-    # If there is a query, we filter games based on the search term
-    if query:
-        games = cerca_giochi(query)  # This should return a list of games matching the query
-
-    # Carica i giochi dalla wishlist
-    wishlist_games = load_wishlist()
-    user_wishlist_slugs = [game["slug"] for game in wishlist_games]
+    fig = px.bar(
+        games, 
+        x='titolo', 
+        y=['prezzo_steam', 'prezzo_ig'], 
+        title=title, 
+        labels={'prezzo_steam': 'Prezzo Steam (€)', 'prezzo_ig': 'Prezzo Instant Gaming (€)'},
+        barmode='group'
+    )
     
-    # Create the graph HTML if games are present
-    graph_html = ""
-    if games and any(
-    (game.get('prezzo_steam') is not None and game['prezzo_steam'] > 0) or
-    (game.get('prezzo_ig') is not None and game['prezzo_ig'] > 0)
-    for game in games
-        ):
-
-        # Prepare data for the plotly graph
-        titles = [game.get('titolo', 'Unknown') for game in games]  # Extract titles (x-axis)
-        prezzi_steam = [game.get('prezzo_steam', 0) for game in games]  # Extract Steam prices (y-axis for Steam)
-        prezzi_ig = [game.get('prezzo_ig', 0) for game in games]  # Extract Instant Gaming prices (y-axis for IG)
-
-        fig = px.bar(
-            games, 
-            x='titolo', 
-            y=['prezzo_steam', 'prezzo_ig'], 
-            title='Confronto Prezzi Steam vs Instant Gaming', 
-            labels={'prezzo_steam': 'Prezzo Steam (€)', 'prezzo_ig': 'Prezzo Instant Gaming (€)'},
-            barmode='group'
+    fig.update_layout(
+        paper_bgcolor="#263246",  # Darker background color
+        font=dict(
+            color="white"  # Set the text color to white
         )
-
-        fig.update_layout(
-            paper_bgcolor="#263246",  # Darker background color
-            font=dict(
-                color="white"  # Set the text color to white
-            )
-        )
-
-
-        graph_html = fig.to_html(full_html=False)
-        
-    # Pass games and the graph to the template
-    return render_template('index.html', games=games, query=query, graph_html=graph_html, 
-                           wishlist_games=wishlist_games, user_wishlist_slugs=user_wishlist_slugs)
-
-
-@app.route('/search')
-def search():
-    query = request.args.get('q', '').strip()
+    )
     
-    if not query:
-        return index()  # If no query, return trending games
-    
-    # Get the search results
-    searched_games = cerca_giochi(query)  # Assuming this function returns search results
-    
-    # Generate the graph HTML for the search results
-    graph_html = ""
+    return fig.to_html(full_html=False)
 
-    if searched_games and searched_games[0]["titolo"] == "No games available":
-        return render_template('index.html', games=searched_games, query=query, graph_html=graph_html, no_results=True)
-
-    if searched_games:
-        valid_games = [game for game in searched_games if game['prezzo_steam'] and game['prezzo_ig']]  # Filter games with valid prices
-        if valid_games:  # Only generate graph if there are valid games
-            fig = px.bar(
-                searched_games, 
-                x='titolo', 
-                y=['prezzo_steam', 'prezzo_ig'], 
-                title=f'Confronto Prezzi per: {query}', 
-                labels={'prezzo_steam': 'Prezzo Steam (€)', 'prezzo_ig': 'Prezzo Instant Gaming (€)'},
-                barmode='group'
-            )
-            graph_html = fig.to_html(full_html=False)
-
-    return render_template('index.html', games=searched_games, query=query, graph_html=graph_html)
-
-
-
-
-@app.route('/game/<slug>')
-def game_details(slug):
-    # Combine saved and searched games
-    all_games = saved_games + searched_games  # Assuming 'searched_games' holds your search results
+def get_game_by_slug(slug):
+    # Combina giochi salvati e cercati
+    all_games = saved_games + searched_games
     
     gioco_selezionato = None
     prezzo_steam = "Non disponibile"
     prezzo_ig = "Non disponibile"
 
-    # Search for the game with the given slug
+    # Cerca il gioco con lo slug specificato
     for gioco in all_games:
         if gioco["slug"] == slug:
-            gioco_selezionato = gioco  # Set the selected game
-            # Get price info for Steam and Instant Gaming
+            gioco_selezionato = gioco
+            # Ottieni le informazioni sui prezzi per Steam e Instant Gaming
             if "steam" in gioco["link"]:
                 prezzo_steam = f"{gioco['prezzo']}€" if gioco["prezzo"] else "Non disponibile"
             else:
                 prezzo_ig = f"{gioco['prezzo']}€" if gioco["prezzo"] else "Non disponibile"
-            break  # Once we find the game, we can break the loop
+            break
     
-    if gioco_selezionato:
-        return render_template('game.html', game=gioco_selezionato, prezzo_steam=prezzo_steam, prezzo_ig=prezzo_ig)
-    
-    return "Gioco non trovato", 404
+    return gioco_selezionato, prezzo_steam, prezzo_ig
 
+# Funzioni che ora fanno da intermediario tra l'interfaccia e la persistenza
 
+def load_wishlist_games():
+    """Carica la wishlist tramite il livello di persistenza"""
+    return load_wishlist_from_db()
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        users = load_users()
-        if username in users and users[username] == password:
-            session['user_id'] = username
-            session['username'] = username
-            flash('Login avvenuto con successo!', 'success')
-            return redirect(url_for('index'))
-        else:
-            flash('Credenziali non valide.', 'danger')
-    return render_template('login.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        users = load_users()
-        if username in users:
-            flash('Username già esistente!', 'warning')
-        else:
-            save_user(username, password)
-            flash('Registrazione avvenuta con successo! Ora puoi accedere.', 'success')
-            return redirect(url_for('login'))
-    return render_template('register.html')
-
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    session.pop('username', None)
-    flash("Sei uscito dall'account.", 'info')
-    return redirect(url_for('index'))
-
-@app.route('/add_to_wishlist/<slug>')
-def add_to_wishlist(slug):
-    if 'user_id' not in session:
-        flash('Devi accedere per aggiungere giochi ai preferiti', 'warning')
-        return redirect(url_for('login'))
-    
-    # Combine saved and searched games
+def add_game_to_wishlist(slug):
+    """Aggiunge un gioco alla wishlist"""
+    # Combina giochi salvati e cercati
     all_games = saved_games + searched_games
     
     # Verifica se il gioco è già nella wishlist
-    wishlist_games = load_wishlist()
+    wishlist_games = load_wishlist_from_db()
     for game in wishlist_games:
         if game["slug"] == slug:
-            return redirect(request.referrer or url_for('index'))
+            return False
     
-    # Find the game with the given slug
+    # Trova il gioco con lo slug specificato
     for gioco in all_games:
         if gioco["slug"] == slug:
-            # Save to wishlist
-            save_wishlist(
+            # Salva nella wishlist tramite il livello di persistenza
+            save_wishlist_to_db(
+                gioco.get("id", ""),
                 gioco["titolo"],
                 gioco["piattaforma"],
                 gioco["prezzo"],
@@ -607,24 +454,31 @@ def add_to_wishlist(slug):
                 gioco["sito"],
                 gioco["slug"]
             )
-            break
+            return True
     
-    return redirect(request.referrer or url_for('index'))
+    return False
 
-@app.route('/remove_from_wishlist/<slug>')
-def remove_from_wishlist(slug):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    # Load current wishlist
-    if os.path.exists(wishlist_file):
-        df = pd.read_csv(wishlist_file)
-        # Remove the game with the given slug
-        df = df[df["slug"] != slug]
-        # Save the updated wishlist
-        df.to_csv(wishlist_file, index=False)
-    
-    return redirect(request.referrer or url_for('index'))
+def remove_game_from_wishlist(slug):
+    """Rimuove un gioco dalla wishlist tramite il livello di persistenza"""
+    return remove_from_wishlist_db(slug)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+def authenticate_user(username, password):
+    """Autentica un utente tramite il livello di persistenza"""
+    users = load_users_from_db()
+    for user in users:
+        if user["username"] == username and user["password"] == password:
+            return user
+    return None
+
+def register_user(username, password):
+    """Registra un nuovo utente tramite il livello di persistenza"""
+    users = load_users_from_db()
+    
+    # Verifica se l'username esiste già
+    for user in users:
+        if user["username"] == username:
+            return False, "Username già esistente!"
+    
+    # Salva il nuovo utente
+    save_user_to_db(username, password)
+    return True, "Registrazione avvenuta con successo!"
