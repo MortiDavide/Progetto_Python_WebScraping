@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyGaming</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>PyGaming</h1>
+            <div class="auth-links">
+                {% if session['user_id'] %}
+                <span>Benvenuto, {{ session['username'] }}!</span>
+                <a href="{{ url_for('logout') }}" class="button">Logout</a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="button">Login</a>
+                <a href="{{ url_for('register') }}" class="button">Registrati</a>
+                {% endif %}
+            </div>
+            <div class="search-container">
+                <form class="search-form" action="/" method="GET">
+                    <input type="text" id="search-input" name="q" placeholder="Cerca un gioco..." value="{{ query }}">
+                    <button type="submit" id="search-button">🔍</button>
+                </form>
+            </div>
+        </header>
+
+        <main>
+            <h2 id="results-title">
+                {% if query %}
+                Risultati per: "{{ query }}"
+                {% else %}
+                Giochi in tendenza
+                {% endif %}
+            </h2>
+
+            <!-- Se ci sono giochi, visualizza il grafico -->
+            {% if graph_html %}
+            <div class="graph-container">
+                {{ graph_html | safe }}
+            </div>
+            {% endif %}
+
+            <!-- Visualizza i giochi trovati -->
+            {% if games %}
+            <div class="games-grid">
+                {% for game in games %}
+                <div class="game-card">
+                    <div class="game-image">
+                        <img src="{{ game.immagine }}" alt="{{ game.titolo }}">
+                    </div>
+                    <div class="game-info">
+                        <h3 class="game-title">{{ game.titolo }} ({{ game.piattaforma }})</h3>
+                        <p>{{ game.sito }}</p>
+                        <p class="game-price">
+                            {% if game.prezzo %}
+                            €{{ "%.2f"|format(game.prezzo) }}
+                            {% else %}
+                            Prezzo non disponibile
+                            {% endif %}
+                        </p>
+                    </div>
+                    <a href="{{ url_for('game_details', slug=game.slug) }}" class="game-link">Dettagli</a>
+                </div>
+                {% endfor %}
+            </div>
+            {% elif query %}
+            <div id="no-results">
+                <p>Nessun risultato trovato per "{{ query }}". Prova con un'altra ricerca.</p>
+            </div>
+            {% endif %}
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <div class="footer-content">
+                <button class="back-to-top">Torna su</button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Aggiungi la funzionalità per tornare in cima
+        document.querySelector('.back-to-top').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+
+</body>
+
+</html>
