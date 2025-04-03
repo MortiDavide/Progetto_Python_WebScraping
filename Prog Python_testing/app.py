@@ -352,10 +352,20 @@ def cerca_giochi(query):
         steam_games = []
     
     if not ig_games and not steam_games:
-        return [{"titolo": "Nessun risultato trovato", "piattaforma": "N/A", "prezzo": None, "immagine": "https://via.placeholder.com/150", "link": "#", "slug": "no-results"}]
+        return [{"titolo": "No games available", "piattaforma": "N/A", "prezzo": None, "immagine": "https://via.placeholder.com/150", "link": "#", "slug": "no-results"}]
     
     searched_games = confronta_prezzi(steam_games, ig_games)  # Unisce i risultati
+    
+    # Filtra giochi senza prezzo valido
+    searched_games = [game for game in searched_games if game['prezzo'] is not None]
+    
+    if not searched_games:
+        return [{"titolo": "No games available", "piattaforma": "N/A", "prezzo": None, "immagine": "https://via.placeholder.com/150", "link": "#", "slug": "no-results"}]
+    
     return searched_games
+
+
+
 
 def load_trending_games():
     global saved_games
@@ -390,43 +400,56 @@ def load_trending_games():
         print(f"Errore durante il caricamento dei giochi di tendenza: {e}")
         return []
 
+
 @app.route('/')
 def index():
     global saved_games
     if not saved_games:
         saved_games = load_trending_games()
     
-    query = request.args.get('q', '')  # If no query, use an empty string
+    query = request.args.get('q', '').strip()  # If no query, use an empty string
     games = saved_games  # Default to trending games if no query is provided
     
     # If there is a query, we filter games based on the search term
     if query:
         games = cerca_giochi(query)  # This should return a list of games matching the query
     
-    # Create the graph HTML if games are present
+    # Initialize the graph_html as an empty string
     graph_html = ""
-    if games:
+    
+    # Create the graph only if there are games and we have valid data
+    if games and any(
+    (game.get('prezzo_steam') is not None and game['prezzo_steam'] > 0) or
+    (game.get('prezzo_ig') is not None and game['prezzo_ig'] > 0)
+    for game in games
+        ):
+
+        # Prepare data for the plotly graph
+        titles = [game.get('titolo', 'Unknown') for game in games]  # Extract titles (x-axis)
+        prezzi_steam = [game.get('prezzo_steam', 0) for game in games]  # Extract Steam prices (y-axis for Steam)
+        prezzi_ig = [game.get('prezzo_ig', 0) for game in games]  # Extract Instant Gaming prices (y-axis for IG)
+
+        # Plot the graph
         fig = px.bar(
             games, 
             x='titolo', 
             y=['prezzo_steam', 'prezzo_ig'], 
             title='Confronto Prezzi Steam vs Instant Gaming', 
-            labels={'prezzo_steam': 'Prezzo Steam (€)', 'prezzo_ig': 'Prezzo Instant Gaming (€)'},
+            labels={'value':'prezzo'},
             barmode='group'
         )
 
-    fig.update_layout(
-    paper_bgcolor="#263246",  # Darker background color
-    font=dict(
-        color="white"  # Set the text color to white
-    )
-)
+        # Update the layout
+        fig.update_layout(
+            paper_bgcolor="#263246",  # Darker background color
+            font=dict(color="white")  # Set the text color to white
+        )
 
-
-    graph_html = fig.to_html(full_html=False)
-        
-    # Pass games and the graph to the template
+        graph_html = fig.to_html(full_html=False)
+    
+    # Pass the games and the graph to the template (if there are games)
     return render_template('index.html', games=games, query=query, graph_html=graph_html)
+
 
 
 @app.route('/search')
@@ -439,20 +462,31 @@ def search():
     # Get the search results
     searched_games = cerca_giochi(query)  # Assuming this function returns search results
     
-    # Generate the graph HTML for the search results
+    # Initialize an empty graph_html variable
     graph_html = ""
-    if searched_games:
-        fig = px.bar(
-            searched_games, 
-            x='titolo', 
-            y=['prezzo_steam', 'prezzo_ig'], 
-            title=f'Confronto Prezzi per: {query}', 
-            labels={'prezzo_steam': 'Prezzo Steam (€)', 'prezzo_ig': 'Prezzo Instant Gaming (€)'},
-            barmode='group'
-        )
-        graph_html = fig.to_html(full_html=False)
+    
+    # Check if no games are found or if the "No games available" message is returned
+    if searched_games and searched_games[0]["titolo"] == "No games available":
+        return render_template('index.html', games=searched_games, query=query, graph_html=graph_html, no_results=True)
+    
+    # If there are games, and we should create a graph
+    if searched_games:  
+        valid_games = [game for game in searched_games if game['prezzo_steam'] and game['prezzo_ig']]  # Filter games with valid prices
+        if valid_games:  # Only generate graph if there are valid games
+            fig = px.bar(
+                valid_games, 
+                x='titolo', 
+                y=['prezzo_steam', 'prezzo_ig'], 
+                title=f'Confronto Prezzi per: {query}', 
+                labels={'prezzo_steam': 'Prezzo Steam (€)', 'prezzo_ig': 'Prezzo Instant Gaming (€)'},
+                barmode='group'
+            )
+            graph_html = fig.to_html(full_html=False)
 
     return render_template('index.html', games=searched_games, query=query, graph_html=graph_html)
+
+
+
 
 
 

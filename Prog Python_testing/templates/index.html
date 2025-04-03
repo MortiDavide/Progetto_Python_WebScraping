@@ -38,14 +38,14 @@
                 {% endif %}
             </h2>
 
-            <!-- Se ci sono giochi, visualizza il grafico -->
-            {% if graph_html %}
+            <!-- Only show the graph if there are valid games and graph_html is not empty -->
+            {% if games and graph_html %}
             <div class="graph-container">
                 {{ graph_html | safe }}
             </div>
             {% endif %}
 
-            <!-- Visualizza i giochi trovati -->
+            <!-- Show the game grid if there are games -->
             {% if games %}
             <div class="games-grid">
                 {% for game in games %}
@@ -69,8 +69,14 @@
                 {% endfor %}
             </div>
             {% elif query %}
+            <!-- Show a no results message when there are no games for a search query -->
             <div id="no-results">
                 <p>Nessun risultato trovato per "{{ query }}". Prova con un'altra ricerca.</p>
+            </div>
+            {% else %}
+            <!-- Show a message when there are no trending games available -->
+            <div id="no-results">
+                <p>Nessun gioco disponibile con un prezzo valido al momento.</p>
             </div>
             {% endif %}
         </main>
